@@ -7,24 +7,32 @@ import java.util.*;
 public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-
+        Product selectedProduct = null;
+        int selectedProductId;
+        int selectedQuantity;
         Store store = new Store();
         System.out.println("Products available in the store: ");
         store.displayProducts();
-        System.out.println("Enter a product Id and quantity: ");
-        int selectedProductId = scanner.nextInt();
-        int selectedQuantity = scanner.nextInt();
+        do {
+            System.out.println("Enter a product Id and quantity: ");
+            selectedProductId = scanner.nextInt();
+            selectedQuantity = scanner.nextInt();
+            selectedProduct = store.selectProductFromList(selectedProductId, selectedQuantity);
+            if (selectedProduct == null) {
+                System.out.println("Please try again with a smaller quantity.");
+            }
+        }while(selectedProduct == null);
 
-        Product selectedProduct = store.selectProductFromList(selectedProductId);
-        CartItem cartItem = new CartItem(selectedProduct, selectedQuantity);
+            CartItem cartItem = new CartItem(selectedProduct, selectedQuantity);
 
-        Cart cart = new Cart();
-        cart.addCartItemToCart(cartItem);
-        cart.displayCart();
-        Map<Product, Integer> cartItemList = cart.getCartItemList();
+            Cart cart = new Cart();
+            cart.addCartItemToCart(cartItem);
+            cart.displayCart();
+            Map<Product, Integer> cartItemList = cart.getCartItemList();
 
-        Order order = new Order();
-        order.createNewOrder(cartItemList);
+            Order order = new Order();
+            order.createNewOrder(cartItemList);
+
     }
 }
 
@@ -32,11 +40,13 @@ class Product {
     private int id;
     private String name;
     private float price;
+    private int quantity;
 
-    public Product(int id, String name, float price) {
+    public Product(int id, String name, float price, int quantity) {
         this.id = id;
         this.name = name;
         this.price = price;
+        this.quantity = quantity;
     }
 
     public int getId() {
@@ -63,6 +73,14 @@ class Product {
         this.price = price;
     }
 
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
     @Override
     public String toString() {
         return "Product{" +
@@ -78,11 +96,11 @@ class Store {
 
     static {
         productList = new ArrayList<>();
-        productList.add(new Product(0, "JackWolfSkin blaue jacke", 184f));
-        productList.add(new Product(1, "RalphLauren schwarzer hose", 99.99f));
-        productList.add(new Product(2, "ChristianaBerg leichte knöchenlange jacke", 100f));
-        productList.add(new Product(3, "Mammout rote wandere Jacke", 508f));
-        productList.add(new Product(4, "CalvinKlein dunkel blaue jeans", 59.99f));
+        productList.add(new Product(0, "JackWolfSkin blaue jacke", 184f, 5));
+        productList.add(new Product(1, "RalphLauren schwarzer hose", 99.99f,5));
+        productList.add(new Product(2, "ChristianaBerg leichte knöchenlange jacke", 100f,5));
+        productList.add(new Product(3, "Mammout rote wandere Jacke", 508f,5));
+        productList.add(new Product(4, "CalvinKlein dunkel blaue jeans", 59.99f,5));
     }
 
     public void displayProducts() {
@@ -91,7 +109,20 @@ class Store {
         }
     }
 
-    public Product selectProductFromList(int id) {
+    public Product selectProductFromList(int id, int quantity) {
+        try {
+            int availableNoOfProducts = productList.get(id).getQuantity();
+            if (availableNoOfProducts >= quantity) {
+                int setNoOfAvailableProducts = availableNoOfProducts - quantity;
+                productList.get(id).setQuantity(setNoOfAvailableProducts);
+            } else {
+                throw new IllegalArgumentException("Not enough stock! Available: "+ availableNoOfProducts);
+            }
+        } catch ( IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+            return null;
+        }
+
         return  productList.get(id);
     }
 
