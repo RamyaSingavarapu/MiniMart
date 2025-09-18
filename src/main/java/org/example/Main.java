@@ -28,10 +28,9 @@ public class Main {
             Cart cart = new Cart();
             cart.addCartItemToCart(cartItem);
             cart.displayCart();
-            Map<Product, Integer> cartItemList = cart.getCartItemList();
+            Map<Integer, CartItem> cartItemList = cart.getCartItemList();
 
-            Order order = new Order();
-            order.createNewOrder(cartItemList);
+            Order order = new Order(cartItemList);
 
     }
 }
@@ -131,33 +130,49 @@ class Store {
 class CartItem {
     public Product product;
     public int quantity;
+    public float amount = 0;
+    private int id;
+    public static int cartItemCount = 0;
+
 
     public CartItem(Product product, int quantity) {
         this.product = product;
         this.quantity = quantity;
+        float priceOfIndividualProduct = product.getPrice();
+        float totalAmount = priceOfIndividualProduct * quantity;
+        this.amount = amount + totalAmount;
+        cartItemCount++;
+        this.setId(cartItemCount);
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 }
 
 class Cart {
 
-    Map<Product, Integer> cartItemList;
+    Map<Integer, CartItem> cartItemList = new LinkedHashMap<>();
 
     public void addCartItemToCart(CartItem cartItem) {
-        cartItemList = new LinkedHashMap<>();
-        cartItemList.put(cartItem.product, cartItem.quantity);
+        cartItemList.put(cartItem.getId(), cartItem);
     }
 
     public void displayCart() {
-        for (Product product : cartItemList.keySet()) {
-            int value = cartItemList.get(product);
+        for (Integer cartItemListKey : cartItemList.keySet()) {
+            CartItem cartItem = cartItemList.get(cartItemListKey);
 
             System.out.println("Items in a cart: "
-                    + value +
-                    " " + product.getName());
+                    + cartItem.quantity +
+                    " " + cartItem.product.getName());
         }
     }
 
-    public Map<Product, Integer> getCartItemList() {
+    public Map<Integer, CartItem> getCartItemList() {
         return cartItemList;
     }
 }
@@ -166,20 +181,19 @@ class Order {
     public int orderId;
     public float amount;
     public OrderStatus status;
-    int count = 0;
+    public static int count = 0;
 
-    public void createNewOrder(Map<Product, Integer> cartItemList){
-        for(Product product : cartItemList.keySet()){
-            int value = cartItemList.get(product);
-            this.amount = value * product.getPrice();
-            count++;
+    public Order(Map<Integer, CartItem> cartItemList) {
+        count++;
+        for(Integer integer: cartItemList.keySet()){
+            CartItem cartItem = cartItemList.get(integer);
+            this.amount = cartItem.amount + this.amount;
         }
         this.orderId = count;
         this.status = OrderStatus.PENDING;
         System.out.println("Your total cartworth: " + this.amount + " which has OrderId: " + orderId);
         System.out.println("Your Order is " + this.status);
     }
-
 }
 
 enum OrderStatus{
