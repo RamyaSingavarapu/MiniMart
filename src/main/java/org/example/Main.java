@@ -15,20 +15,32 @@ public class Main {
         System.out.println("Products available in the store: ");
         store.displayProducts();
 
-        do {
-            System.out.println("Enter a product Id and quantity: ");
-            selectedProductId = scanner.nextInt();
-            selectedQuantity = scanner.nextInt();
-            selectedProduct = store.selectProductFromList(selectedProductId, selectedQuantity);
-            if (selectedProduct == null) {
-                System.out.println("Please try again with a smaller quantity.");
-            }
-        } while (selectedProduct == null);
-
-        CartItem cartItem = new CartItem(selectedProduct, selectedQuantity);
-
+        String userWishAddItemsInCart;
+        CartItem cartItem;
         Cart cart = new Cart();
-        cart.addCartItemToCart(cartItem);
+
+        do {
+            System.out.println("Do you wish to add Items in the cart?");
+            userWishAddItemsInCart = scanner.next().toLowerCase();
+
+            if(userWishAddItemsInCart.equals("yes")) {
+                do {
+                    System.out.println("Enter a product Id and quantity: ");
+                    selectedProductId = scanner.nextInt();
+                    // get existing quantity of this productid that is already in the cart or 0 if it does not exist
+                    selectedQuantity = scanner.nextInt(); // add existing quantity to user's entered quantity to get total quantity for checking
+                    selectedProduct = store.selectProductFromList(selectedProductId, selectedQuantity);
+
+                    if (selectedProduct == null) {
+                        System.out.println("Please try again with a smaller quantity.");
+                    }
+                } while (selectedProduct == null);
+
+                cartItem = new CartItem(selectedProduct, selectedQuantity);
+                cart.addCartItemToCart(cartItem);
+            }
+        } while (userWishAddItemsInCart.equals("yes"));
+
         cart.displayCart();
         Map<Integer, CartItem> cartItemList = cart.getCartItemList();
 
@@ -126,6 +138,7 @@ class Store {
     public Product selectProductFromList(int id, int quantity) {
         try {
             int availableNoOfProducts = productList.get(id).getQuantity();
+
             if (availableNoOfProducts >= quantity) {
                 return productList.get(id);
             } else {
@@ -139,14 +152,12 @@ class Store {
 }
 
 
-
 class CartItem {
     public Product product;
     public int quantity;
     public float amount = 0;
     private int id;
     public static int cartItemCount = 0;
-
 
     public CartItem(Product product, int quantity) {
         this.product = product;
@@ -169,7 +180,11 @@ class CartItem {
 
 class Cart {
 
-    Map<Integer, CartItem> cartItemList = new LinkedHashMap<>();
+    Map<Integer, CartItem> cartItemList;
+
+    public Cart() {
+        cartItemList = new LinkedHashMap<>();
+    }
 
     public void addCartItemToCart(CartItem cartItem) {
         cartItemList.put(cartItem.getId(), cartItem);
@@ -188,6 +203,8 @@ class Cart {
     public Map<Integer, CartItem> getCartItemList() {
         return cartItemList;
     }
+
+    // add a method here that returns quantity or 0 for a given product id
 }
 
 class Order extends Store {
@@ -218,9 +235,9 @@ class Order extends Store {
             int originalQuantity = productList.get(index).getQuantity();
             int availableQuantity = originalQuantity - cartItem.quantity;
             productList.get(index).setQuantity(availableQuantity);
-            cartItemList.clear();
-            displayProducts();
         }
+        cartItemList.clear();
+        displayProducts();
     }
 
     public void cancelOrder(Map<Integer, CartItem> cartItemList) {
