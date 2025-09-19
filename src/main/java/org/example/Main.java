@@ -11,8 +11,10 @@ public class Main {
         int selectedProductId;
         int selectedQuantity;
         Store store = new Store();
+
         System.out.println("Products available in the store: ");
         store.displayProducts();
+
         do {
             System.out.println("Enter a product Id and quantity: ");
             selectedProductId = scanner.nextInt();
@@ -21,17 +23,29 @@ public class Main {
             if (selectedProduct == null) {
                 System.out.println("Please try again with a smaller quantity.");
             }
-        }while(selectedProduct == null);
+        } while (selectedProduct == null);
 
-            CartItem cartItem = new CartItem(selectedProduct, selectedQuantity);
+        CartItem cartItem = new CartItem(selectedProduct, selectedQuantity);
 
-            Cart cart = new Cart();
-            cart.addCartItemToCart(cartItem);
-            cart.displayCart();
-            Map<Integer, CartItem> cartItemList = cart.getCartItemList();
+        Cart cart = new Cart();
+        cart.addCartItemToCart(cartItem);
+        cart.displayCart();
+        Map<Integer, CartItem> cartItemList = cart.getCartItemList();
 
-            Order order = new Order(cartItemList);
-
+        Order order = new Order(cartItemList);
+        System.out.println("Do you want to proceed with this order: ");
+        String userConfirmationInput = scanner.next().toLowerCase();
+        switch (userConfirmationInput) {
+            case "yes":
+                order.confirmOrder(cartItemList);
+                break;
+            case "no":
+                order.cancelOrder(cartItemList);
+                break;
+            default:
+                System.out.println("Enter yes/no");
+                break;
+        }
     }
 }
 
@@ -86,6 +100,7 @@ class Product {
                 "id=" + id +
                 ", name='" + name + '\'' +
                 ", price=" + price +
+                ", quantity=" + quantity +
                 '}';
     }
 }
@@ -96,10 +111,10 @@ class Store {
     static {
         productList = new ArrayList<>();
         productList.add(new Product(0, "JackWolfSkin blaue jacke", 184f, 5));
-        productList.add(new Product(1, "RalphLauren schwarzer hose", 99.99f,5));
-        productList.add(new Product(2, "ChristianaBerg leichte knöchenlange jacke", 100f,5));
-        productList.add(new Product(3, "Mammout rote wandere Jacke", 508f,5));
-        productList.add(new Product(4, "CalvinKlein dunkel blaue jeans", 59.99f,5));
+        productList.add(new Product(1, "RalphLauren schwarzer hose", 99.99f, 5));
+        productList.add(new Product(2, "ChristianaBerg leichte knöchenlange jacke", 100f, 5));
+        productList.add(new Product(3, "Mammout rote wandere Jacke", 508f, 5));
+        productList.add(new Product(4, "CalvinKlein dunkel blaue jeans", 59.99f, 5));
     }
 
     public void displayProducts() {
@@ -112,20 +127,18 @@ class Store {
         try {
             int availableNoOfProducts = productList.get(id).getQuantity();
             if (availableNoOfProducts >= quantity) {
-                int setNoOfAvailableProducts = availableNoOfProducts - quantity;
-                productList.get(id).setQuantity(setNoOfAvailableProducts);
+                return productList.get(id);
             } else {
-                throw new IllegalArgumentException("Not enough stock! Available: "+ availableNoOfProducts);
+                throw new IllegalArgumentException("Not enough stock! Available: " + availableNoOfProducts);
             }
-        } catch ( IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             System.out.println(e.getMessage());
             return null;
         }
-
-        return  productList.get(id);
     }
-
 }
+
+
 
 class CartItem {
     public Product product;
@@ -177,7 +190,7 @@ class Cart {
     }
 }
 
-class Order {
+class Order extends Store {
     public int orderId;
     public float amount;
     public OrderStatus status;
@@ -185,18 +198,41 @@ class Order {
 
     public Order(Map<Integer, CartItem> cartItemList) {
         count++;
-        for(Integer integer: cartItemList.keySet()){
-            CartItem cartItem = cartItemList.get(integer);
-            this.amount = cartItem.amount + this.amount;
+        for (Integer id : cartItemList.keySet()) {
+            CartItem cartItem = cartItemList.get(id);
+            this.amount += cartItem.amount;
         }
         this.orderId = count;
         this.status = OrderStatus.PENDING;
         System.out.println("Your total cartworth: " + this.amount + " which has OrderId: " + orderId);
         System.out.println("Your Order is " + this.status);
     }
+
+    public void confirmOrder(Map<Integer, CartItem> cartItemList) {
+
+        this.status = OrderStatus.CONFIRMED;
+        System.out.println("Your Order is " + this.status);
+        for (Integer id : cartItemList.keySet()) {
+            CartItem cartItem = cartItemList.get(id);
+            int index = productList.indexOf(cartItem.product);
+            int originalQuantity = productList.get(index).getQuantity();
+            int availableQuantity = originalQuantity - cartItem.quantity;
+            productList.get(index).setQuantity(availableQuantity);
+            cartItemList.clear();
+            displayProducts();
+        }
+    }
+
+    public void cancelOrder(Map<Integer, CartItem> cartItemList) {
+        this.status = OrderStatus.CANCELED;
+        System.out.println("Your order is " + this.status);
+        cartItemList.clear();
+        displayProducts();
+    }
+
 }
 
-enum OrderStatus{
+enum OrderStatus {
     PENDING,
     CONFIRMED,
     CANCELED
